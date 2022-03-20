@@ -1,0 +1,318 @@
+# AWS CLI COMMANDS
+# aws cloudformation create-stack --stack-name seamless-softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+# aws cloudformation update-stack --stack-name seamless-softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+
+Parameters:
+
+  # Networking
+  Vpc:
+    Type: 'AWS::EC2::VPC::Id'
+    Default: 'vpc-cfcf5ea6'
+  Subnet1:
+    Type: 'AWS::EC2::Subnet::Id'
+    Default: 'subnet-6522b90c'
+  Subnet2:
+    Type: 'AWS::EC2::Subnet::Id'
+    Default: 'subnet-f750ec8c'
+  AcmCertificateArn:
+    Type: String
+    Default: arn:aws:acm:us-east-1:511236308357:certificate/e559b716-0259-43d5-b5bc-d08e64bc9fce
+    Description: A certificate for us-east-1 Certificat Manager
+
+  # Code Pipline
+  BranchName:
+    Description: GitHub branch name
+    Type: String
+    Default: master
+  RepositoryName:
+    Description: GitHub repository name
+    Type: String
+    Default: softphone
+  GitHubOwner:
+    Type: String
+    Default: SeamlessCare
+  Email:
+    Description: Email address where CodePipeline sends pipeline notifications
+    Type: String 
+    Default: ahmed.younis@seamlesscare.ca
+
+  # Domains 
+  HostName:
+    Type: String
+    Default: 'seamlesscare.ca'
+    Description: Host Zone domain name 
+  ProdAppDomain:
+    Type: String
+    Default: 'softphone.seamlesscare.ca'
+
+  # Bucket Names
+  ProdBucketName:
+    Type: String
+    Default: 'cfn-seamless-softphone'
+    Description: Enter a unqiue bucket name to store the web app files
+
+Resources:
+
+  # Route53
+  ProdRoute53RecordSetGroup:
+    Type: "AWS::Route53::RecordSetGroup"
+    Properties:
+      HostedZoneName: !Join [ "", [ !Ref HostName, '.' ] ]
+      RecordSets:
+      - Name: !Ref ProdAppDomain
+        Type: A
+        AliasTarget:
+          HostedZoneId: Z2FDTNDATAQYW2
+          DNSName: !GetAtt ProdCloudFrontDistribution.DomainName
+
+  #  Prod Stack 
+  ProdS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref 'ProdBucketName'
+      AccessControl: PublicRead
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+    DeletionPolicy: Delete
+  ProdReadPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    Properties:
+      Bucket: 
+        !Ref ProdS3Bucket
+      PolicyDocument:
+        Statement:
+          - Action: 
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${ProdS3Bucket}/*'
+            Principal:
+              CanonicalUser: !GetAtt ProdCloudFrontOriginAccessIdentity.S3CanonicalUserId
+  ProdCloudFrontOriginAccessIdentity:
+    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Ref ProdS3Bucket
+  ProdCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: Cloudfront Distribution pointing to ProdS3Bucket
+        Origins:
+        - DomainName: !GetAtt 'ProdS3Bucket.DomainName'
+          Id: S3Origin
+          S3OriginConfig:
+            OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${ProdCloudFrontOriginAccessIdentity}'
+        Enabled: true
+        HttpVersion: 'http2'
+        DefaultRootObject: index.html
+        Aliases:
+        - !Ref 'ProdAppDomain'
+        DefaultCacheBehavior:
+          AllowedMethods:
+          - GET
+          - HEAD
+          Compress: true
+          TargetOriginId: S3Origin
+          ForwardedValues:
+            QueryString: true
+            Cookies:
+              Forward: none
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100 # For canada us euro |  use PriceClass_All  for the world
+        ViewerCertificate:
+          AcmCertificateArn: !Ref AcmCertificateArn
+          SslSupportMethod: sni-only
+        CustomErrorResponses:
+        - ErrorCode: 403 # not found
+          ResponseCode: 200
+          ResponsePagePath: '/index.html'
+        - ErrorCode: 404 # not found
+          ResponseCode: 200
+          ResponsePagePath: '/index.html'
+  ProdBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ProdBuildProject-${AWS::StackName}
+      Description: Prod Build
+      ServiceRole: !GetAtt [ CodeBuildRole, Arn ]
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: aws/codebuild/standard:5.0
+        EnvironmentVariables:
+          - Value: !Ref ProdS3Bucket
+            Type: PLAINTEXT
+            Name:  S3_BUCKET_Name
+          - Value: prod
+            Type: PLAINTEXT
+            Name: Environment
+      Source:
+        BuildSpec: buildspec.yml
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 15
+      Tags:
+        - Key: Name
+          Value: !Sub ProdBuildProject-${AWS::StackName}
+
+  # cicd Stack
+  CodeBuildRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName:
+        !Sub CodeBuildRole-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /service-role/
+      Policies:
+        - PolicyName: "CodeBuildCICDAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "logs:CreateLogGroup"
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/*
+              - Effect: "Allow"
+                Action:
+                  - "s3:PutObject"
+                  - "s3:GetObject"
+                  - "s3:GetObjectVersion"
+                  - "s3:ListBucket"
+                  - "s3:DeleteObject"
+                Resource:
+                  - !Sub arn:aws:s3:::codepipeline-${AWS::Region}-*
+                  - !Sub arn:aws:s3:::${ProdBucketName}/*
+                  - !Sub arn:aws:s3:::${ProdBucketName}
+                  - !Sub arn:aws:s3:::codepipeline-ca-central-1-905995830804
+                  - !Sub arn:aws:s3:::codepipeline-ca-central-1-905995830804/*
+              - Effect: "Allow"
+                Action:
+                  - "ecr:BatchCheckLayerAvailability"
+                  - "ecr:CompleteLayerUpload"
+                  - "ecr:GetAuthorizationToken"
+                  - "ecr:InitiateLayerUpload"
+                  - "ecr:PutImage"
+                  - "ecr:UploadLayerPart"
+                  - "ecr:CreateRepository"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:GetDownloadUrlForLayer"
+                  - "ecr:DescribeImages"
+                  - "ecr:BatchCheckLayerAvailability"
+                Resource:
+                  - "*"
+              - Effect: "Allow"
+                Action:
+                  - "sts:AssumeRole"
+                Resource:
+                  - "*"
+  ProdPipeline:
+    Type: "AWS::CodePipeline::Pipeline"
+    Properties:
+      Name: !Sub HPClient-Production-${AWS::StackName}
+      RoleArn: !GetAtt [ CodePipelineRole, Arn ]
+      ArtifactStore:
+        Type: S3
+        Location: codepipeline-ca-central-1-905995830804
+      Stages:
+        - Name: GetSourceCode
+          Actions:
+            - Name: SourceAction
+              OutputArtifacts:
+                - Name: SourceCode
+              ActionTypeId:
+                Category: Source
+                Owner: ThirdParty
+                Version: 1
+                Provider: GitHub
+              Configuration:
+                Owner: !Ref GitHubOwner
+                Repo: !Ref RepositoryName
+                Branch: !Ref BranchName
+                OAuthToken: '{{resolve:secretsmanager:MyGitHubSecret:SecretString:token}}'
+                PollForSourceChanges: false
+              RunOrder: 1
+        - Name: ProductionEnvironment
+          Actions:
+            # - Name: ProductionApproval
+            #   ActionTypeId:
+            #     Category: Approval
+            #     Owner: AWS
+            #     Version: 1
+            #     Provider: Manual
+            #   Configuration:
+            #     NotificationArn: !Ref CodePipelineSNSTopic
+            #     ExternalEntityLink: !Join [ "", [ 'https://', !Ref ProdAppDomain ] ]
+            #     CustomData: Manual Approve To Production Environment
+            #   RunOrder: 1
+            - Name: ProdFrontendBuild
+              InputArtifacts:
+                - Name: SourceCode
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !ImportValue ProdBuildProjectHPClient
+              RunOrder: 3
+  ProdPipelineWebhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      Authentication: GITHUB_HMAC
+      AuthenticationConfiguration:
+        SecretToken: '{{resolve:secretsmanager:MyGitHubSecret:SecretString:token}}'
+      Filters:
+        - JsonPath: $.ref
+          MatchEquals: 'refs/heads/{Branch}'
+      TargetPipeline: !Ref ProdPipeline
+      TargetAction: SourceAction
+      Name: !Sub ProdPipelineWebhook-${AWS::StackName}
+      TargetPipelineVersion: !GetAtt 
+        - ProdPipeline
+        - Version
+      RegisterWithThirdParty: true
+  CodePipelineRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName:
+        !Sub CodePipelineRole-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+                - "ecs-tasks.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: /
+      Policies:
+        - PolicyName: "CodePipelineCICDAccessPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "*"
+                Resource:
+                  - '*'
+  CodePipelineSNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref Email
+          Protocol: email

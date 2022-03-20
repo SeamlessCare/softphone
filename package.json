@@ -51,6 +51,7 @@
     "webpack-plugin-replace": "^1.2.0"
   },
   "dependencies": {
+    "amazon-connect-streams": "^2.0.0",
     "http-server": "^14.1.0"
   }
 }

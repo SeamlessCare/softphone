@@ -1,0 +1,15 @@
+version: 0.2
+
+phases:
+  install:
+    run-as: root
+    commands:
+      - cd cfn
+  build:
+    run-as: root
+    commands:
+      - 
+artifacts:
+  files:
+    - '**/*'
+  base-directory: 'release'
