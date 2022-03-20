@@ -50,5 +50,7 @@
     "webpack-cli": "^4.9.1",
     "webpack-plugin-replace": "^1.2.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "http-server": "^14.1.0"
+  }
 }

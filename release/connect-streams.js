@@ -24437,7 +24437,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// AWS SDK for JavaScript v2.553.0
 
   /**-------------------------------------------------------------------------
    * Get the list of media devices from iframed CCP
-   * Timeout for the request is passed an an optional argument
+   * Timeout for the request is passed on an optional argument
    * The default timeout is 1000ms
    */
   connect.core.getFrameMediaDevices = function (timeoutIn) {
@@ -25343,7 +25343,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// AWS SDK for JavaScript v2.553.0
  
   /**
    * Used of agent interface control. 
-   * connect.core.viewContact("contactId") ->  this is curently programmed to get the contact into view.
+   * connect.core.viewContact("contactId") ->  this is currently programmed to get the contact into view.
    */
   connect.core.viewContact = function (contactId) {
     connect.core.getUpstream().sendUpstream(connect.EventType.BROADCAST, {
@@ -25362,7 +25362,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// AWS SDK for JavaScript v2.553.0
  
   /**
    * Used of agent interface control. 
-   * connect.core.activateChannelWithViewType() ->  this is curently programmed to get either the number pad, quick connects, or create task into view.
+   * connect.core.activateChannelWithViewType() ->  this is currently programmed to get either the number pad, quick connects, or create task into view.
    * the valid combinations are ("create_task", "task"), ("number_pad", "softphone"), ("create_task", "softphone"), ("quick_connects", "softphone")
    * the softphone with create_task combo is a special case in the channel view to allow all three view type buttons to appear on the softphone screen
    *
@@ -29447,7 +29447,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;// AWS SDK for JavaScript v2.553.0
   var GET_AGENT_SUCCESS_TIMEOUT_MS = 100;
   var LOG_BUFFER_CAP_SIZE = 400;
 
-  var CHECK_AUTH_TOKEN_INTERVAL_MS = 300000; // 5 minuts
+  var CHECK_AUTH_TOKEN_INTERVAL_MS = 300000; // 5 minutes
   var REFRESH_AUTH_TOKEN_INTERVAL_MS = 10000; // 10 seconds
   var REFRESH_AUTH_TOKEN_MAX_TRY = 4;
 
