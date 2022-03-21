@@ -140,7 +140,7 @@ Resources:
         Type: CODEPIPELINE
       Environment:
         Type: LINUX_CONTAINER
-        ComputeType: BUILD_GENERAL1_MEDIUM
+        ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
         EnvironmentVariables:
           - Value: !Ref ProdS3Bucket
@@ -218,6 +218,11 @@ Resources:
                   - "sts:AssumeRole"
                 Resource:
                   - "*"
+              - Effect: "Allow"
+                Action:
+                  - "cloudfront:*"
+                Resource: 
+                  - "*"  
   ProdPipeline:
     Type: "AWS::CodePipeline::Pipeline"
     Properties:
@@ -310,15 +315,7 @@ Resources:
                   - "*"
                 Resource:
                   - '*'
-        - PolicyName: "AllowAllCloudFrontPermissions"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "cloudfront:*"
-                Resource:
-                  - '*'
+
 
   CodePipelineSNSTopic:
     Type: AWS::SNS::Topic
