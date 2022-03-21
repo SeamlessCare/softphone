@@ -310,13 +310,13 @@ Resources:
                   - "*"
                 Resource:
                   - '*'
-        - PolicyName: "cloudfrontCreateInvalidation"
+        - PolicyName: "AllowAllCloudFrontPermissions"
           PolicyDocument:
             Version: "2012-10-17"
             Statement:
               - Effect: "Allow"
                 Action:
-                  - "cloudfront:CreateInvalidation"
+                  - "cloudfront:*"
                 Resource:
                   - '*'
 
