@@ -146,9 +146,9 @@ Resources:
           - Value: !Ref ProdS3Bucket
             Type: PLAINTEXT
             Name:  S3_BUCKET_Name
-          - Value: prod
+          - Value: !Ref ProdCloudFrontDistribution
             Type: PLAINTEXT
-            Name: Environment
+            Name: CLOUDFRONT_ID
       Source:
         # BuildSpec: buildspec.yml
         Type: CODEPIPELINE

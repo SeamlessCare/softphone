@@ -2,14 +2,14 @@ version: 0.2
 
 phases:
   install:
-    run-as: root
     commands:
-      - ls
+      - echo "install step"   
   build:
-    run-as: root
     commands:
-      - 
-artifacts:
-  files:
-    - '**/*'
-  base-directory: 'release'
+      - echo "build step bucket= $S3_BUCKET_Name cloud distro id= $CLOUDFRONT_ID"     
+      - pwd
+      - aws s3 sync "./release" "s3://$S3_BUCKET_Name/"
+      - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_ID" --paths '/*'
+  post_build:
+    commands:
+      - echo "post_build step"     
