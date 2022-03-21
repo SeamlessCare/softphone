@@ -1,4 +1,36 @@
-# About
+
+
+# App setup 
+
+
+## requirements
+npm install http-server
+
+
+## starting Development environment  
+cd release 
+modify main file:  softphone/release/customccp.html
+
+## To see changes run command http-server 
+http-server
+
+## Pushing to live site  https://softphone.seamlesscare.ca
+
+
+## CFN Create 
+To Create new stack: 
+aws cloudformation create-stack --stack-name pharmacy-frontend-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+
+## CFN Create 
+aws cloudformation update-stack --stack-name pharmacy-frontend-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+
+
+
+
+
+
+
+# About AWS CONNECT STREAM 
 
 [![Build Status](https://travis-ci.org/amazon-connect/amazon-connect-streams.svg?branch=master)](https://travis-ci.org/amazon-connect/amazon-connect-streams)
 
