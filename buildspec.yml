@@ -4,7 +4,6 @@ phases:
   install:
     run-as: root
     commands:
-      - cd cfn
       - ls
   build:
     run-as: root
