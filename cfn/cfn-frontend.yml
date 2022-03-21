@@ -72,8 +72,8 @@ Resources:
       BucketName: !Ref 'ProdBucketName'
       AccessControl: PublicRead
       WebsiteConfiguration:
-        IndexDocument: index.html
-        ErrorDocument: index.html
+        IndexDocument: customccp.html
+        ErrorDocument: customccp.html
     DeletionPolicy: Delete
   ProdReadPolicy:
     Type: 'AWS::S3::BucketPolicy'
@@ -105,7 +105,7 @@ Resources:
             OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${ProdCloudFrontOriginAccessIdentity}'
         Enabled: true
         HttpVersion: 'http2'
-        DefaultRootObject: index.html
+        DefaultRootObject: customccp.html
         Aliases:
         - !Ref 'ProdAppDomain'
         DefaultCacheBehavior:
@@ -126,10 +126,10 @@ Resources:
         CustomErrorResponses:
         - ErrorCode: 403 # not found
           ResponseCode: 200
-          ResponsePagePath: '/index.html'
+          ResponsePagePath: '/customccp.html'
         - ErrorCode: 404 # not found
           ResponseCode: 200
-          ResponsePagePath: '/index.html'
+          ResponsePagePath: '/customccp.html'
   ProdBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
