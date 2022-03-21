@@ -1,6 +1,6 @@
 # AWS CLI COMMANDS
-# aws cloudformation create-stack --stack-name seamless-softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
-# aws cloudformation update-stack --stack-name seamless-softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+# aws cloudformation create-stack --stack-name softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
+# aws cloudformation update-stack --stack-name softphone-stack --template-body file://cfn-frontend.yml --capabilities CAPABILITY_AUTO_EXPAND CAPABILITY_NAMED_IAM
 
 Parameters:
 
@@ -150,7 +150,7 @@ Resources:
             Type: PLAINTEXT
             Name: Environment
       Source:
-        BuildSpec: buildspec.yml
+        # BuildSpec: buildspec.yml
         Type: CODEPIPELINE
       TimeoutInMinutes: 15
       Tags:
@@ -266,7 +266,7 @@ Resources:
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !ImportValue ProdBuildProjectHPClient
+                ProjectName: !Ref ProdBuildProject
               RunOrder: 3
   ProdPipelineWebhook:
     Type: 'AWS::CodePipeline::Webhook'
