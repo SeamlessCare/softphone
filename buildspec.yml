@@ -9,7 +9,7 @@ phases:
       - echo "build step bucket= $S3_BUCKET_Name cloud distro id= $CLOUDFRONT_ID"     
       - pwd
       - aws s3 sync "./release" "s3://$S3_BUCKET_Name/"
-      - aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_ID" --paths '/*'
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths '/*'
   post_build:
     commands:
       - echo "post_build step"     
