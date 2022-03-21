@@ -220,9 +220,9 @@ Resources:
                   - "*"
               - Effect: "Allow"
                 Action:
-                  - "cloudfront:*"
-                Resource: 
-                  - "*"  
+                  - "cloudfront:CreateInvalidation"
+                Resource:
+                  - "*"
   ProdPipeline:
     Type: "AWS::CodePipeline::Pipeline"
     Properties:
@@ -315,6 +315,11 @@ Resources:
                   - "*"
                 Resource:
                   - '*'
+              - Effect: "Allow"
+                Action:
+                  - "cloudfront:CreateInvalidation"
+                Resource:
+                  - "*"
 
 
   CodePipelineSNSTopic:
