@@ -310,6 +310,16 @@ Resources:
                   - "*"
                 Resource:
                   - '*'
+        - PolicyName: "cloudfrontCreateInvalidation"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "cloudfront:CreateInvalidation"
+                Resource:
+                  - '*'
+
   CodePipelineSNSTopic:
     Type: AWS::SNS::Topic
     Properties:
